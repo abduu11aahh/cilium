@@ -9,7 +9,7 @@
  *                                 is_ipv6, verdict, proxy_port, match_type,
  *                                 is_audited, cookie)
  *
- * If POLICY_VERDICT_NOTIFY is not defined, the API will be a non-op.
+ * If enable_policy_verdict_notify is disabled, the API will be a non-op.
  */
 #pragma once
 
@@ -46,7 +46,7 @@ struct policy_verdict_notify {
 	POLICY_VERDICT_EXTENSION
 };
 
-#ifdef POLICY_VERDICT_NOTIFY
+#if defined(IS_BPF_HOST) || defined(IS_BPF_LXC)
 static __always_inline bool policy_verdict_filter_allow(__u32 filter, __u8 dir)
 {
 	/* Make dir being volatile to avoid compiler optimizing out
@@ -76,6 +76,9 @@ send_policy_verdict_notify(const struct __ctx_buff *ctx, __u32 remote_label, __u
 	__u64 cap_len = min_t(__u64, TRACE_PAYLOAD_LEN, ctx_len);
 	struct policy_verdict_notify *msg = &vars->msg;
 
+	if (!CONFIG(enable_policy_verdict_notify))
+		return;
+
 #if defined(IS_BPF_HOST)
 	/* When this function is called in the context of bpf_host (e.g. by
 	 * host firewall) POLICY_VERDICT_LOG_FILTER is always set to 0,
@@ -93,8 +96,6 @@ send_policy_verdict_notify(const struct __ctx_buff *ctx, __u32 remote_label, __u
 #elif defined(IS_BPF_LXC)
 	if (!policy_verdict_filter_allow(POLICY_VERDICT_LOG_FILTER, dir))
 		return;
-#else
-	#error "policy_log.h only supports inclusion from bpf_host or bpf_lxc"
 #endif
 
 	if (CONFIG(events_map_rate_limit) > 0) {
@@ -141,4 +142,4 @@ send_policy_verdict_notify(const struct __ctx_buff *ctx __maybe_unused,
 			   __u32 cookie __maybe_unused)
 {
 }
-#endif /* POLICY_VERDICT_NOTIFY */
+#endif /* IS_BPF_HOST || IS_BPF_LXC */

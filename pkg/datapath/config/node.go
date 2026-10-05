@@ -153,6 +153,7 @@ func NodeConfig(lnc *Config) Node {
 
 	node.DebugLB = option.Config.Opts.IsEnabled(option.DebugLB)
 	node.EnableDropNotify = option.Config.Opts.IsEnabled(option.DropNotify)
+	node.EnablePolicyVerdictNotify = option.Config.Opts.IsEnabled(option.PolicyVerdictNotify)
 
 	node.HashInit4Seed = lnc.MaglevConfig.SeedJhash0
 	node.HashInit6Seed = lnc.MaglevConfig.SeedJhash1
